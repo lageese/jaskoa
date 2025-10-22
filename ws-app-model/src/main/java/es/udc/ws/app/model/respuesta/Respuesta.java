@@ -1,4 +1,4 @@
-package es.udc.ws.app.model.util.respuesta;
+package es.udc.ws.app.model.respuesta;
 
 import java.time.LocalDateTime;
 
