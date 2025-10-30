@@ -49,7 +49,9 @@ public class SurveyServiceImpl implements SurveyService {
     @Override
     public Encuesta buscarEncuestaPorId(Long encuestaId)
             throws InstanceNotFoundException {
-        throw new UnsupportedOperationException("Operación no implementada todavía");
+
+        // La lógica es simple: llamar al DAO y devolver lo que encuentre
+        return encuestaDao.find(encuestaId);
     }
 
     @Override
