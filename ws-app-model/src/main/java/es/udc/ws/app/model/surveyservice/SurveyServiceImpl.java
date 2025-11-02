@@ -84,8 +84,8 @@ public class SurveyServiceImpl implements SurveyService {
         }
 
         //Crear respuesta
-        Respuesta respuesta = new Respuesta(encuestaId, emailEmpleado, afirmativa, LocalDateTime.now().withNano(0));
-
+        Respuesta respuesta = new Respuesta(encuestaId, emailEmpleado, afirmativa);
+                
         // Actualizar contadores de la encuesta
         if (afirmativa) {
             encuesta.setRespuestasPositivas(encuesta.getRespuestasPositivas() + 1);
