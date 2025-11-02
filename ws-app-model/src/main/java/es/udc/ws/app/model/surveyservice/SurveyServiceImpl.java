@@ -4,6 +4,10 @@ import es.udc.ws.app.model.encuesta.Encuesta;
 import es.udc.ws.app.model.encuesta.EncuestaDao;
 import es.udc.ws.app.model.encuesta.EncuestaDaoFactory;
 import es.udc.ws.app.model.respuesta.Respuesta;
+//añadido
+import es.udc.ws.app.model.respuesta.RespuestaDao;
+import es.udc.ws.app.model.respuesta.RespuestaDaoFactory;
+//
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaCanceladaException;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaFinalizadaException;
 import es.udc.ws.app.model.surveyservice.exceptions.FechaFinExpiradaException;
@@ -16,9 +20,15 @@ import java.util.List;
 public class SurveyServiceImpl implements SurveyService {
 
     private EncuestaDao encuestaDao = null;
-
+    //añadido
+    private RespuestaDao respuestaDao = null;
+    //
     public SurveyServiceImpl() {
         this.encuestaDao = EncuestaDaoFactory.getDao();
+        //añadido
+        this.respuestaDao = RespuestaDaoFactory.getDao();
+        //
+        
     }
 
     @Override
@@ -54,11 +64,41 @@ public class SurveyServiceImpl implements SurveyService {
         return encuestaDao.find(encuestaId);
     }
 
+    //añadida implementacion de responderEncuesta
     @Override
     public Respuesta responderEncuesta(Long encuestaId, String emailEmpleado, boolean afirmativa)
             throws InputValidationException, InstanceNotFoundException,
             EncuestaFinalizadaException, EncuestaCanceladaException {
-        throw new UnsupportedOperationException("Operación no implementada todavía");
+
+        //Buscar la encuesta
+        Encuesta encuesta = encuestaDao.find(encuestaId);
+
+        //Validar que no esté cancelada
+        if (encuesta.isCancelada()) {
+            throw new EncuestaCanceladaException(encuestaId);
+        }
+
+        //Validar que no esté finalizada
+        if (encuesta.getFechaFin().isBefore(LocalDateTime.now())) {
+            throw new EncuestaFinalizadaException(encuestaId, encuesta.getFechaFin());
+        }
+
+        //Crear respuesta
+        Respuesta respuesta = new Respuesta(encuestaId, emailEmpleado, afirmativa, LocalDateTime.now().withNano(0));
+
+        // Actualizar contadores de la encuesta
+        if (afirmativa) {
+            encuesta.setRespuestasPositivas(encuesta.getRespuestasPositivas() + 1);
+        } else {
+            encuesta.setRespuestasNegativas(encuesta.getRespuestasNegativas() + 1);
+        }
+
+        //Guardar cambios
+        encuestaDao.update(encuesta);
+        respuestaDao.create(respuesta);
+
+        //Devolver la respuesta creada
+        return respuesta;
     }
 
     @Override
