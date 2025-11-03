@@ -11,8 +11,9 @@ import es.udc.ws.app.model.respuesta.RespuestaDaoFactory;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaCanceladaException;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaFinalizadaException;
 import es.udc.ws.app.model.surveyservice.exceptions.FechaFinExpiradaException;
-import es.udc.ws.util.exceptions.InputValidationException;
-import es.udc.ws.util.exceptions.InstanceNotFoundException; // Asegúrate de que esta línea existe
+import es.udc.ws.app.model.util.exceptions.InputValidationException;
+import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
+ // Asegúrate de que esta línea existe
 
 import java.time.LocalDateTime;
 import java.util.List;
