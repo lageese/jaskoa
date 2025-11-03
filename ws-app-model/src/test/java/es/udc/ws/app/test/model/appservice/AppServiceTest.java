@@ -8,9 +8,9 @@ import es.udc.ws.app.model.surveyservice.SurveyServiceFactory;
 import es.udc.ws.app.model.surveyservice.exceptions.FechaFinExpiradaException;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaCanceladaException;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaFinalizadaException;
-import es.udc.ws.util.exceptions.InputValidationException;
-import es.udc.ws.util.exceptions.InstanceNotFoundException;
-import es.udc.ws.util.jdbc.DataSourceLocator;
+import es.udc.ws.app.model.util.exceptions.InputValidationException;
+import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
+import es.udc.ws.util.jdbc.DataSourceLocator;//ESTA RUTA ESTA MAL
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
