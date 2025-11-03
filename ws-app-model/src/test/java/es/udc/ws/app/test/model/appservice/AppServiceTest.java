@@ -10,7 +10,11 @@ import es.udc.ws.app.model.surveyservice.exceptions.EncuestaCanceladaException;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaFinalizadaException;
 import es.udc.ws.app.model.util.exceptions.InputValidationException;
 import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
-import es.udc.ws.util.jdbc.DataSourceLocator;//ESTA RUTA ESTA MAL
+import es.udc.ws.app.test.model.appservice.DataSourceLocator;
+
+
+
+
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -21,7 +25,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AppServiceTest {
+public class  AppServiceTest {
 
     private static SurveyService surveyService = null;
 
@@ -50,23 +54,17 @@ public class AppServiceTest {
     public void testCrearEncuestaBasico()
             throws InputValidationException, FechaFinExpiradaException, InstanceNotFoundException {
 
-
         clearTables();
-
 
         String pregunta = "Pregunta de prueba básica";
         LocalDateTime fechaFin = LocalDateTime.now().plusDays(10).withNano(0);
-
 
         Encuesta encuestaCreada = surveyService.crearEncuesta(
                 new Encuesta(pregunta, fechaFin));
 
         Encuesta encuestaDeBD = surveyService.buscarEncuestaPorId(encuestaCreada.getEncuestaId());
 
-
         assertEquals(encuestaCreada, encuestaDeBD);
-
-
         assertNotNull(encuestaDeBD.getEncuestaId());
         assertEquals(pregunta, encuestaDeBD.getPregunta());
         assertEquals(fechaFin, encuestaDeBD.getFechaFin());
@@ -144,19 +142,20 @@ public class AppServiceTest {
     }
 
     @Test
-    public void testBuscarEncuesta() throws  FechaFinExpiradaException, InstanceNotFoundException {
+    public void testBuscarEncuesta()
+            throws FechaFinExpiradaException, InputValidationException, InstanceNotFoundException {
 
-        //Crear una encuesta para probar
+        // Crear una encuesta para probar
         Encuesta encuesta = new Encuesta("¿Te gusta el café?", LocalDateTime.now().plusDays(5));
         Encuesta creada = surveyService.crearEncuesta(encuesta);
 
-        //Buscar la encuesta por ID
+        // Buscar la encuesta por ID
         Encuesta encontrada = surveyService.buscarEncuestaPorId(creada.getEncuestaId());
         assertNotNull(encontrada);
         assertEquals(creada.getEncuestaId(), encontrada.getEncuestaId());
         assertEquals(creada.getPregunta(), encontrada.getPregunta());
 
-        //Probar que lanza excepción si no existe
+        // Probar que lanza excepción si no existe
         Long idInexistente = -1L;
         assertThrows(InstanceNotFoundException.class, () -> {
             surveyService.buscarEncuestaPorId(idInexistente);
