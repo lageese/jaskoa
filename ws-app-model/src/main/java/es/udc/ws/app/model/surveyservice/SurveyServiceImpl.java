@@ -4,7 +4,7 @@ import es.udc.ws.app.model.encuesta.Encuesta;
 import es.udc.ws.app.model.encuesta.EncuestaDao;
 import es.udc.ws.app.model.encuesta.EncuestaDaoFactory;
 import es.udc.ws.app.model.respuesta.Respuesta;
-//añadido
+// Imports para RespuestaDao
 import es.udc.ws.app.model.respuesta.RespuestaDao;
 import es.udc.ws.app.model.respuesta.RespuestaDaoFactory;
 //
@@ -12,7 +12,7 @@ import es.udc.ws.app.model.surveyservice.exceptions.EncuestaCanceladaException;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaFinalizadaException;
 import es.udc.ws.app.model.surveyservice.exceptions.FechaFinExpiradaException;
 import es.udc.ws.util.exceptions.InputValidationException;
-import es.udc.ws.util.exceptions.InstanceNotFoundException;
+import es.udc.ws.util.exceptions.InstanceNotFoundException; // Asegúrate de que esta línea existe
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,15 +20,13 @@ import java.util.List;
 public class SurveyServiceImpl implements SurveyService {
 
     private EncuestaDao encuestaDao = null;
-    //añadido
+    // Declaración del DAO de Respuesta
     private RespuestaDao respuestaDao = null;
-    //
+    
     public SurveyServiceImpl() {
         this.encuestaDao = EncuestaDaoFactory.getDao();
-        //añadido
+        // Inicialización del DAO de Respuesta
         this.respuestaDao = RespuestaDaoFactory.getDao();
-        //
-        
     }
 
     @Override
@@ -56,22 +54,27 @@ public class SurveyServiceImpl implements SurveyService {
         throw new UnsupportedOperationException("Operación no implementada todavía");
     }
 
+    // ==================================================================
+    // CORRECCIÓN 1: Añadir "throws InstanceNotFoundException"
+    // ==================================================================
     @Override
     public Encuesta buscarEncuestaPorId(Long encuestaId)
-            throws InstanceNotFoundException {
-
+            throws InstanceNotFoundException { // <--- ESTO ES LO QUE FALTA
+        
         // La lógica es simple: llamar al DAO y devolver lo que encuentre
-        return encuestaDao.find(encuestaId);
+        return encuestaDao.find(encuestaId); // <--- Esta es tu línea 65
     }
 
-    //añadida implementacion de responderEncuesta
+    // ==================================================================
+    // CORRECCIÓN 2: Añadir "InstanceNotFoundException" a la lista de throws
+    // ==================================================================
     @Override
     public Respuesta responderEncuesta(Long encuestaId, String emailEmpleado, boolean afirmativa)
-            throws InputValidationException, InstanceNotFoundException,
+            throws InputValidationException, InstanceNotFoundException, // <--- ESTO ES LO QUE FALTA
             EncuestaFinalizadaException, EncuestaCanceladaException {
 
         //Buscar la encuesta
-        Encuesta encuesta = encuestaDao.find(encuestaId);
+        Encuesta encuesta = encuestaDao.find(encuestaId); // <--- Esta es tu línea 77
 
         //Validar que no esté cancelada
         if (encuesta.isCancelada()) {
@@ -94,7 +97,7 @@ public class SurveyServiceImpl implements SurveyService {
         }
 
         //Guardar cambios
-        encuestaDao.update(encuesta);
+        encuestaDao.update(encuesta); // <--- Esta es tu línea 100
         respuestaDao.create(respuesta);
 
         //Devolver la respuesta creada
