@@ -16,22 +16,14 @@
         <module>ws-app-client</module>
     </modules>
 
-    <!-- =================================================================== -->
-    <!-- Default values for properties. These default values are expected 
-        to be valid for most profiles. Specific profiles can overwrite values when 
-        necessary. -->
     <properties>
-        <!-- Data source properties -->
         <dataSource.user>ws</dataSource.user>
         <dataSource.password>ws</dataSource.password>
         <dataSource.jndiName>jdbc/ws-javaexamples-ds</dataSource.jndiName>
         <testDataSource.user>${dataSource.user}</testDataSource.user>
         <testDataSource.password>${dataSource.password}</testDataSource.password>
 
-        <!-- Encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!-- Package versions (except those defined in "profiles" section) -->
 
         <commonsDbcp.version>2.13.0</commonsDbcp.version>
         <junit.version>5.13.4</junit.version>
@@ -42,20 +34,17 @@
         <jackson.version>2.19.2</jackson.version>
         <ws-util.version>3.9.0</ws-util.version>
 
-        <!-- JDBC driver properties -->
         <jdbcDriver.groupId>com.mysql</jdbcDriver.groupId>
         <jdbcDriver.artifactId>mysql-connector-j</jdbcDriver.artifactId>
         <jdbcDriver.version>8.4.0</jdbcDriver.version>
         <jdbcDriver.className>com.mysql.cj.jdbc.Driver</jdbcDriver.className>
 
-		<!-- Data source properties -->
 		<dataSource.baseUrl>jdbc:mysql://localhost/ws</dataSource.baseUrl>
         <dataSource.url>${dataSource.baseUrl}?useSSL=false&amp;serverTimezone=Europe/Madrid&amp;allowPublicKeyRetrieval=true</dataSource.url>
         <testDataSource.url>${dataSource.baseUrl}test?useSSL=false&amp;serverTimezone=Europe/Madrid&amp;allowPublicKeyRetrieval=true</testDataSource.url>
 		<dataSource.createTablesScript>MySQLCreateTables.sql</dataSource.createTablesScript>		
 
-	    <!-- Plugin versions -->
-        <compilerMavenPlugin.version>3.14.0</compilerMavenPlugin.version>
+	    <compilerMavenPlugin.version>3.14.0</compilerMavenPlugin.version>
         <resourcesMavenPlugin.version>3.3.1</resourcesMavenPlugin.version>
         <execMavenPlugin.version>3.5.1</execMavenPlugin.version>
         <warMavenPlugin.version>3.4.0</warMavenPlugin.version>
@@ -67,8 +56,6 @@
         <thriftMavenPlugin.version>0.10.0</thriftMavenPlugin.version>
     </properties>
 
-    <!-- ========================================================== -->
-    <!-- Profiles -->
     <profiles>
         <profile>
             <id>thrift-0.13.0</id>
@@ -167,56 +154,45 @@
         </profile>
     </profiles>
 
-    <!-- ========================================================== -->
-    <!-- Additional repositories -->
     <repositories>
     </repositories>
 
-    <!-- ========================================================== -->
-    <!-- Dependency management -->
     <dependencyManagement>
         <dependencies>
-            <!-- JDBC driver -->
-			<dependency>
+            <dependency>
 				<groupId>${jdbcDriver.groupId}</groupId>
 				<artifactId>${jdbcDriver.artifactId}</artifactId>
 				<version>${jdbcDriver.version}</version>
 				<scope>test</scope>
 			</dependency>
-            <!-- Commons DBCP - JDBC Connection Pool -->
-			<dependency>
+            <dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-dbcp2</artifactId>
 				<version>${commonsDbcp.version}</version>
 				<scope>test</scope>
 			</dependency>
-            <!-- JUnit -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-engine</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
-            <!-- Servlet API -->
             <dependency>
                 <groupId>jakarta.servlet</groupId>
                 <artifactId>jakarta.servlet-api</artifactId>
                 <version>${servletApi.version}</version>
                 <scope>provided</scope>
             </dependency>
-            <!-- WS-JavaExamples Util -->
             <dependency>
                 <groupId>es.udc.ws</groupId>
                 <artifactId>ws-util</artifactId>
                 <version>${ws-util.version}</version>
             </dependency>
-			<!-- Commons HttpClient -->
-            <dependency>
+			<dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
             </dependency>
-            <!-- Apache HttpClient 5-->
             <dependency>
                 <groupId>org.apache.httpcomponents.client5</groupId>
                 <artifactId>httpclient5-fluent</artifactId>
@@ -227,33 +203,27 @@
                 <artifactId>httpcore5</artifactId>
                 <version>${httpcore5.version}</version>
             </dependency>
-			<!-- Jackson -->
 			<dependency>
     			<groupId>com.fasterxml.jackson.core</groupId>
 			    <artifactId>jackson-databind</artifactId>
     			<version>${jackson.version}</version>
 			</dependency>
-			<!-- Thrift -->
-            <dependency>
+			<dependency>
                 <groupId>org.apache.thrift</groupId>
                 <artifactId>libthrift</artifactId>
                 <version>${thrift.version}</version>
                 <exclusions>
-                    <!--  To avoid scanning the classes of the package javax.servlet
-                          from multiple locations -->
                     <exclusion>
                         <groupId>org.apache.tomcat.embed</groupId>
                         <artifactId>tomcat-embed-core</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
-            <!-- Project Model -->
             <dependency>
                 <groupId>es.udc.ws.app</groupId>
                 <artifactId>ws-app-model</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- Project Thrift -->
             <dependency>
                 <groupId>es.udc.ws.app</groupId>
                 <artifactId>ws-app-thrift</artifactId>
@@ -264,17 +234,12 @@
 
     <build>
 
-        <!-- =============================================================== -->
-        <!-- Filtering -->
         <resources>
 
-            <!-- Continue considering resources the files in src/main/resources, 
-                but without applying filtering. -->
             <resource>
                 <directory>src/main/resources</directory>
             </resource>
 
-            <!-- Filter Jetty configuration -->
             <resource>
                 <directory>../src/main/jetty</directory>
                 <includes>
@@ -287,8 +252,6 @@
 
         <testResources>
 
-            <!-- Continue considering resources the files in src/test/resources, 
-                but without applying filtering. -->
             <testResource>
                 <directory>src/test/resources</directory>
             </testResource>
@@ -298,15 +261,12 @@
 
         <plugins>
 
- 			<!-- ========================================================== -->
-			<!-- Compiler configuration -->
-			<plugin>
+ 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${compilerMavenPlugin.version}</version>
 				<configuration>
 					<verbose>true</verbose>
-                    <!-- Source & target are not necessary, but intelliJ depends on it to set the Java compiler settings  -->
                     <source>21</source>
                     <target>21</target>
 					<release>21</release>
@@ -316,17 +276,12 @@
 				</configuration>
 			</plugin>
 
-			<!-- ========================================================== -->
-			<!-- Resources plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>${resourcesMavenPlugin.version}</version>
 			</plugin>
 
-			<!-- ========================================================== -->
-			<!-- Surefire plugin -->
-			<!-- Default version does not support JUnit 5. -->
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${surefireMavenPlugin.version}</version>
@@ -335,29 +290,18 @@
                 </configuration>
 			</plugin>
 
-  			<!-- ========================================================== -->
-			<!-- Exec plugin -->
-			<plugin>
+  			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>${execMavenPlugin.version}</version>
 			</plugin>
 
-            <!-- ========================================================== -->
-			<!-- WAR plugin -->
-			<plugin>
+            <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>${warMavenPlugin.version}</version>
 			</plugin>
             
-            <!-- ========================================================== -->
-            <!-- Setting SQL Plugin -->
-            <!-- - Configuration specifies onError="continue" since SQL scripts 
-                try to drop tables before creating them (which causes errors if such tables 
-                do not exist yet). - Configuartion specifies autocommit="true" since some 
-                drivers (e.g the PostgreSQL JDBC 2 driver) do not commit changes if some 
-                error ocurrs. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>sql-maven-plugin</artifactId>
@@ -412,8 +356,6 @@
                 </executions>
             </plugin>
 
-			<!-- ========================================================== -->
-			<!-- Assembly configuration -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -427,8 +369,6 @@
 				</configuration>
 			</plugin>
 
-			<!-- ========================================================== -->
-			<!-- Enforcer configuration -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
