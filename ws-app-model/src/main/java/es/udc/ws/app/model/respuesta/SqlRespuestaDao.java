@@ -1,7 +1,8 @@
 package es.udc.ws.app.model.respuesta;
 
-import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
 import java.util.List;
+
+import es.udc.ws.util.exceptions.InstanceNotFoundException;
 
 public interface SqlRespuestaDao {
 

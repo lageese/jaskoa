@@ -4,9 +4,9 @@ import es.udc.ws.util.sql.DataSourceLocator;
 
 import java.sql.*;
 
-public class Jdbc3CcSqlRespuestaDao {
+public class Jdbc3CcSqlRespuestaDao extends AbstractSqlResouestaDao {
     @Override
-    public Respuesta create(Respuesta respuesta) extends AbstractSqlEncuestaDao {
+    public Respuesta create(Respuesta respuesta) {
 
         String queryString = "INSERT INTO Respuesta (encuestaId, emailEmpleado, afirmativa, fechaRespuesta)"
                 + " VALUES (?, ?, ?, ?)";

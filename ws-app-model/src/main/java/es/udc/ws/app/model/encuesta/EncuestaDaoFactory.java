@@ -2,13 +2,13 @@ package es.udc.ws.app.model.encuesta;
 
 public class EncuestaDaoFactory {
     private final static String CLASS_NAME_PARAMETER = "EncuestaDaoFactory.className";
-    private static EncuestaDao dao = null;
+    private static SqlEncuestaDao dao = null;
 
     private EncuestaDaoFactory() {
     }
 
     @SuppressWarnings("unchecked")
-    private static EncuestaDao getInstance() {
+    private static SqlEncuestaDao getInstance() {
         try {
             String daoClassName = System.getProperty(CLASS_NAME_PARAMETER);
             if (daoClassName == null) {
@@ -16,7 +16,7 @@ public class EncuestaDaoFactory {
                 daoClassName = "es.udc.ws.app.model.encuesta.SqlEncuestaDao";
             }
             Class<?> daoClass = Class.forName(daoClassName);
-            dao = (EncuestaDao) daoClass.getDeclaredConstructor().newInstance();
+            dao = (SqlEncuestaDao) daoClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

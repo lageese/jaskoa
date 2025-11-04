@@ -14,7 +14,6 @@ import java.sql.Timestamp;
 
 public class Jdbc3CcSqlEncuestaDao extends AbstractSqlEncuestaDao{
 
-    @Override
     public Encuesta create(Encuesta encuesta) {
 
         String query = "INSERT INTO Encuesta (pregunta, fechaFin, fechaCreacion, " +
