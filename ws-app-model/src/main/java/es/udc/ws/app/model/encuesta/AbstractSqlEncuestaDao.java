@@ -1,5 +1,12 @@
 package es.udc.ws.app.model.encuesta;
 
+import es.udc.ws.util.sql.DataSourceLocator;
+import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
+
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,43 +15,41 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import static es.udc.ws.app.model.util.ModelConstants.SURVEY_DATA_SOURCE;
-import es.udc.ws.util.exceptions.InstanceNotFoundException;
-import es.udc.ws.util.sql.DataSourceLocator;
 
 
 public abstract class AbstractSqlEncuestaDao implements SqlEncuestaDao {
     protected AbstractSqlEncuestaDao(){
 
     }
-    public Encuesta find(Long encuestaId) throws InstanceNotFoundException {
+    @Override
+    public Encuesta find(Connection connection, Long encuestaId)
+            throws InstanceNotFoundException {
 
         String query = "SELECT pregunta, fechaFin, fechaCreacion, " +
                 "respuestasPositivas, respuestasNegativas, cancelada " +
                 "FROM Encuesta WHERE encuestaId = ?";
 
-        try (Connection connection = DataSourceLocator.getDataSource(SURVEY_DATA_SOURCE)
-                .getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setLong(1, encuestaId);
             ResultSet rs = preparedStatement.executeQuery();
 
             if (!rs.next()) {
-                throw new InstanceNotFoundException(encuestaId,
-                        Encuesta.class.getName());
+                throw new InstanceNotFoundException(encuestaId, Encuesta.class.getName());
             }
 
+            // Recuperar datos del ResultSet
             String pregunta = rs.getString("pregunta");
-            Timestamp fechaFin = rs.getTimestamp("fechaFin");
-            Timestamp fechaCreacion = rs.getTimestamp("fechaCreacion");
-            int respuestasPos = rs.getInt("respuestasPositivas");
-            int respuestasNeg = rs.getInt("respuestasNegativas");
+            LocalDateTime fechaFin = rs.getTimestamp("fechaFin").toLocalDateTime();
+            LocalDateTime fechaCreacion = rs.getTimestamp("fechaCreacion").toLocalDateTime();
+            int respuestasPositivas = rs.getInt("respuestasPositivas");
+            int respuestasNegativas = rs.getInt("respuestasNegativas");
             boolean cancelada = rs.getBoolean("cancelada");
 
-            return new Encuesta(encuestaId, pregunta, fechaFin.toLocalDateTime(),
-                    fechaCreacion.toLocalDateTime(), respuestasPos, respuestasNeg, cancelada);
+            // Devolver la encuesta
+            return new Encuesta(encuestaId, pregunta, fechaFin, fechaCreacion,
+                    respuestasPositivas, respuestasNegativas, cancelada);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -150,18 +155,16 @@ public abstract class AbstractSqlEncuestaDao implements SqlEncuestaDao {
             throw new RuntimeException(e);
         }
     }
-    
-    public void update(Encuesta encuesta) throws InstanceNotFoundException {
+    @Override
+    public void update(Connection connection, Encuesta encuesta)
+            throws InstanceNotFoundException {
 
-        String queryString = "UPDATE Encuesta SET pregunta = ?, fechaFin = ?, " +
+        String query = "UPDATE Encuesta SET pregunta = ?, fechaFin = ?, " +
                 "respuestasPositivas = ?, respuestasNegativas = ?, cancelada = ? " +
                 "WHERE encuestaId = ?";
 
-        // Usamos el JNDI name de tu pom.xml
-        try (Connection connection = DataSourceLocator.getDataSource("jdbc/ws-javaexamples-ds").getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(queryString)) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            // Asignar parámetros
             preparedStatement.setString(1, encuesta.getPregunta());
             preparedStatement.setTimestamp(2, Timestamp.valueOf(encuesta.getFechaFin()));
             preparedStatement.setLong(3, encuesta.getRespuestasPositivas());
@@ -169,11 +172,9 @@ public abstract class AbstractSqlEncuestaDao implements SqlEncuestaDao {
             preparedStatement.setBoolean(5, encuesta.isCancelada());
             preparedStatement.setLong(6, encuesta.getEncuestaId());
 
-            // Ejecutar la actualización
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected == 0) {
-                // Si no se actualizó ninguna fila, la encuesta no existía
                 throw new InstanceNotFoundException(encuesta.getEncuestaId(), Encuesta.class.getName());
             }
 
@@ -202,4 +203,5 @@ public abstract class AbstractSqlEncuestaDao implements SqlEncuestaDao {
         }
     }
 }
+
 
