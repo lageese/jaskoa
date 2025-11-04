@@ -1,29 +1,41 @@
 package es.udc.ws.app.model.encuesta;
 
-import es.udc.ws.util.sql.DataSourceLocator;
-
+import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
 import java.sql.*;
+import java.time.LocalDateTime;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
+public class Jdbc3CcSqlEncuestaDao extends AbstractSqlEncuestaDao {
 
 
-public class Jdbc3CcSqlEncuestaDao extends AbstractSqlEncuestaDao{
+    @Override
+    public void remove(Connection connection, Long encuestaId)
+            throws InstanceNotFoundException {
 
-    public Encuesta create(Encuesta encuesta) {
+        String query = "DELETE FROM Encuesta WHERE encuestaId = ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setLong(1, encuestaId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new InstanceNotFoundException(encuestaId, Encuesta.class.getName());
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Encuesta create(Connection connection, Encuesta encuesta) {
 
         String query = "INSERT INTO Encuesta (pregunta, fechaFin, fechaCreacion, " +
                 "respuestasPositivas, respuestasNegativas, cancelada) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
-
-        try (Connection connection = DataSourceLocator.getDataSource("jdbc/app").getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(
-                     query, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(
+                query, Statement.RETURN_GENERATED_KEYS)) {
 
             // Asignar parámetros
             preparedStatement.setString(1, encuesta.getPregunta());
@@ -33,23 +45,23 @@ public class Jdbc3CcSqlEncuestaDao extends AbstractSqlEncuestaDao{
             preparedStatement.setInt(5, (int) encuesta.getRespuestasNegativas());
             preparedStatement.setBoolean(6, encuesta.isCancelada());
 
-            // Ejecutar la inserción
+            // Ejecutar inserción
             preparedStatement.executeUpdate();
 
-            // Obtener el ID generado
-            ResultSet rs = preparedStatement.getGeneratedKeys();
-            if (!rs.next()) {
-                throw new SQLException("No se pudo obtener el ID generado para la encuesta");
+            // Obtener ID generado
+            try (ResultSet rs = preparedStatement.getGeneratedKeys()) {
+                if (!rs.next()) {
+                    throw new SQLException("No se pudo obtener el ID generado para la encuesta");
+                }
+                Long encuestaId = rs.getLong(1);
+                encuesta.setEncuestaId(encuestaId);
             }
-            Long encuestaId = rs.getLong(1);
 
-            // Devolver la encuesta actualizada con su ID
-            encuesta.setEncuestaId(encuestaId);
             return encuesta;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-
 }
+
