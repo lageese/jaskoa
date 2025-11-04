@@ -1,6 +1,6 @@
 package es.udc.ws.app.model.encuesta;
 
-import es.udc.ws.util.exceptions.InstanceNotFoundException;
+import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
 import java.sql.Connection;
 import java.util.List;
 
