@@ -23,7 +23,7 @@ public class EncuestaDaoFactory {
         return dao;
     }
 
-    public synchronized static EncuestaDao getDao() {
+    public synchronized static SqlEncuestaDao getDao() {
         if (dao == null) {
             dao = getInstance();
         }

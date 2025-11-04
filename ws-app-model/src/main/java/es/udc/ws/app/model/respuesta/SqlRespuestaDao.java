@@ -3,7 +3,7 @@ package es.udc.ws.app.model.respuesta;
 import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
 import java.util.List;
 
-public interface RespuestaDao {
+public interface SqlRespuestaDao {
 
     public Respuesta create(Respuesta respuesta);
 

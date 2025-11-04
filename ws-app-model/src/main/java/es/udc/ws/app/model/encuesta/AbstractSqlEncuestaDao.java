@@ -1,6 +1,7 @@
 package es.udc.ws.app.model.encuesta;
 
 import es.udc.ws.util.sql.DataSourceLocator;
+import es.udc.ws.util.exceptions.InstanceNotFoundException;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -14,39 +15,40 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-public abstract class AbstractSqlEncuestaDao implements EncuestaDao {
-    protected AbstractSqlEncuestaDao abstractSqlEncuestaDao(){
+import static es.udc.ws.app.model.util.ModelConstants.SURVEY_DATA_SOURCE;
+
+
+public abstract class AbstractSqlEncuestaDao implements SqlEncuestaDao {
+    protected AbstractSqlEncuestaDao(){
 
     }
-    @Override
     public Encuesta find(Long encuestaId) throws InstanceNotFoundException {
 
         String query = "SELECT pregunta, fechaFin, fechaCreacion, " +
                 "respuestasPositivas, respuestasNegativas, cancelada " +
                 "FROM Encuesta WHERE encuestaId = ?";
 
-        try (Connection connection = DataSourceLocator.getDataSource("jdbc/app").getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+        try (Connection connection = DataSourceLocator.getDataSource(SURVEY_DATA_SOURCE)
+                .getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setLong(1, encuestaId);
-
             ResultSet rs = preparedStatement.executeQuery();
 
             if (!rs.next()) {
-                throw new InstanceNotFoundException(encuestaId, Encuesta.class.getName());
+                throw new InstanceNotFoundException(encuestaId,
+                        Encuesta.class.getName());
             }
 
-            // Recuperar datos del ResultSet
             String pregunta = rs.getString("pregunta");
-            LocalDateTime fechaFin = rs.getTimestamp("fechaFin").toLocalDateTime();
-            LocalDateTime fechaCreacion = rs.getTimestamp("fechaCreacion").toLocalDateTime();
-            int respuestasPositivas = rs.getInt("respuestasPositivas");
-            int respuestasNegativas = rs.getInt("respuestasNegativas");
+            Timestamp fechaFin = rs.getTimestamp("fechaFin");
+            Timestamp fechaCreacion = rs.getTimestamp("fechaCreacion");
+            int respuestasPos = rs.getInt("respuestasPositivas");
+            int respuestasNeg = rs.getInt("respuestasNegativas");
             boolean cancelada = rs.getBoolean("cancelada");
 
-            // Crear y devolver el objeto Encuesta
-            return new Encuesta(encuestaId, pregunta, fechaFin, fechaCreacion,
-                    respuestasPositivas, respuestasNegativas, cancelada);
+            return new Encuesta(encuestaId, pregunta, fechaFin.toLocalDateTime(),
+                    fechaCreacion.toLocalDateTime(), respuestasPos, respuestasNeg, cancelada);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

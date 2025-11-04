@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AbstractSqlResouestaDao implements RespuestaDao  {
+public class AbstractSqlResouestaDao implements SqlRespuestaDao {
     protected AbstractSqlResouestaDao() {
     }
 
