@@ -11,23 +11,23 @@ import es.udc.ws.app.model.respuesta.RespuestaDaoFactory;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaCanceladaException;
 import es.udc.ws.app.model.surveyservice.exceptions.EncuestaFinalizadaException;
 import es.udc.ws.app.model.surveyservice.exceptions.FechaFinExpiradaException;// Asegúrate de que esta línea existe
-import es.udc.ws.app.model.util.exceptions.InputValidationException;
-import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
+import es.udc.ws.util.exceptions.InputValidationException;
+import es.udc.ws.util.exceptions.InstanceNotFoundException;
+
 
 
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 public class SurveyServiceImpl implements SurveyService {
 
     private EncuestaDao encuestaDao = null;
-    // Declaración del DAO de Respuesta
     private RespuestaDao respuestaDao = null;
 
     public SurveyServiceImpl() {
         this.encuestaDao = EncuestaDaoFactory.getDao();
-        // Inicialización del DAO de Respuesta
         this.respuestaDao = RespuestaDaoFactory.getDao();
     }
 
@@ -35,12 +35,10 @@ public class SurveyServiceImpl implements SurveyService {
     public Encuesta crearEncuesta(Encuesta encuesta)
             throws InputValidationException, FechaFinExpiradaException {
 
-        //Validar que la encuesta no sea nula
         if (encuesta == null) {
             throw new InputValidationException("La encuesta no puede ser nula");
         }
 
-        //Validar que la pregunta no esté vacía o nula
         if (encuesta.getPregunta() == null || encuesta.getPregunta().trim().isEmpty()) {
             throw new InputValidationException("La pregunta de la encuesta no puede estar vacía");
         }
@@ -65,73 +63,143 @@ public class SurveyServiceImpl implements SurveyService {
         return encuestaDao.create(encuesta);
     }
 
-    // MÉTODOS RESTANTES (A IMPLEMENTAR EN FUTURAS FASES)
 
     @Override
     public List<Encuesta> buscarEncuestas(String palabraClave, boolean soloNoFinalizadas) {
-        throw new UnsupportedOperationException("Operación no implementada todavía");
+
+        // Validamos la entrada (la práctica dice que la palabra clave no puede ser nula)
+        Objects.requireNonNull(palabraClave, "La palabra clave no puede ser nula");
+
+        return encuestaDao.findByKeywords(palabraClave, soloNoFinalizadas);
     }
 
-    // ==================================================================
-    // CORRECCIÓN 1: Añadir "throws InstanceNotFoundException"
-    // ==================================================================
+
     @Override
     public Encuesta buscarEncuestaPorId(Long encuestaId)
-            throws InstanceNotFoundException { // <--- ESTO ES LO QUE FALTA
+            throws InstanceNotFoundException {
 
         // La lógica es simple: llamar al DAO y devolver lo que encuentre
         return encuestaDao.find(encuestaId); // <--- Esta es tu línea 65
     }
 
-    // ==================================================================
-    // CORRECCIÓN 2: Añadir "InstanceNotFoundException" a la lista de throws
-    // ==================================================================
+
     @Override
     public Respuesta responderEncuesta(Long encuestaId, String emailEmpleado, boolean afirmativa)
-            throws InputValidationException, InstanceNotFoundException, // <--- ESTO ES LO QUE FALTA
+            throws InputValidationException, InstanceNotFoundException,
             EncuestaFinalizadaException, EncuestaCanceladaException {
 
-        //Buscar la encuesta
-        Encuesta encuesta = encuestaDao.find(encuestaId); // <--- Esta es tu línea 77
+        // 1. Validar email (simple)
+        if (emailEmpleado == null || emailEmpleado.trim().isEmpty()) {
+            throw new InputValidationException("El email del empleado no puede ser nulo o vacío");
+        }
 
-        //Validar que no esté cancelada
+        Encuesta encuesta = encuestaDao.find(encuestaId);
+
+        // 3. Validar estado de la encuesta (requisitos de [FUNC-4])
         if (encuesta.isCancelada()) {
             throw new EncuestaCanceladaException(encuestaId);
         }
-
-        //Validar que no esté finalizada
         if (encuesta.getFechaFin().isBefore(LocalDateTime.now())) {
             throw new EncuestaFinalizadaException(encuestaId, encuesta.getFechaFin());
         }
 
-        //Crear respuesta
-        Respuesta respuesta = new Respuesta(encuestaId, emailEmpleado, afirmativa);
+        // 4. Lógica de "Crear" o "Actualizar" respuesta
+        // Buscamos si el empleado ya ha respondido
+        Respuesta respuestaExistente = respuestaDao.findByEmailAndEncuestaId(encuestaId, emailEmpleado);
 
-        // Actualizar contadores de la encuesta
-        if (afirmativa) {
-            encuesta.setRespuestasPositivas(encuesta.getRespuestasPositivas() + 1);
+        LocalDateTime ahora = LocalDateTime.now().withNano(0);
+
+        if (respuestaExistente == null) {
+            // 4.A. CASO NUEVO: El empleado responde por primera vez
+
+            // Creamos la nueva respuesta
+            Respuesta nuevaRespuesta = new Respuesta(encuestaId, emailEmpleado, afirmativa);
+            nuevaRespuesta.setFechaRespuesta(ahora);
+
+            // Guardamos la respuesta en la BD
+            Respuesta respuestaGuardada = respuestaDao.create(nuevaRespuesta);
+
+            // Actualizamos el contador de la encuesta
+            if (afirmativa) {
+                encuesta.setRespuestasPositivas(encuesta.getRespuestasPositivas() + 1);
+            } else {
+                encuesta.setRespuestasNegativas(encuesta.getRespuestasNegativas() + 1);
+            }
+            encuestaDao.update(encuesta); // Guardamos la encuesta actualizada (¡requiere Tarea 2 de Angie!)
+
+            return respuestaGuardada;
+
         } else {
-            encuesta.setRespuestasNegativas(encuesta.getRespuestasNegativas() + 1);
+
+            boolean respuestaAntigua = respuestaExistente.isAfirmativa();
+
+            // Actualizamos el objeto respuesta
+            respuestaExistente.setAfirmativa(afirmativa);
+            respuestaExistente.setFechaRespuesta(ahora);
+
+            // Guardamos la respuesta actualizada en la BD
+            respuestaDao.update(respuestaExistente);
+
+            // Actualizamos contadores SI la respuesta ha cambiado
+            if (respuestaAntigua != afirmativa) {
+                if (afirmativa) {
+                    // Voto cambió a SÍ: +1 pos, -1 neg
+                    encuesta.setRespuestasPositivas(encuesta.getRespuestasPositivas() + 1);
+                    encuesta.setRespuestasNegativas(encuesta.getRespuestasNegativas() - 1);
+                } else {
+                    // Voto cambió a NO: -1 pos, +1 neg
+                    encuesta.setRespuestasPositivas(encuesta.getRespuestasPositivas() - 1);
+                    encuesta.setRespuestasNegativas(encuesta.getRespuestasNegativas() + 1);
+                }
+                encuestaDao.update(encuesta); // Guardamos la encuesta actualizada (¡requiere Tarea 2 de Angie!)
+            }
+
+            return respuestaExistente;
         }
-
-        //Guardar cambios
-        encuestaDao.update(encuesta); // <--- Esta es tu línea 100
-        respuestaDao.create(respuesta);
-
-        //Devolver la respuesta creada
-        return respuesta;
     }
-
     @Override
     public Encuesta cancelarEncuesta(Long encuestaId)
             throws InstanceNotFoundException, EncuestaFinalizadaException,
             EncuestaCanceladaException {
-        throw new UnsupportedOperationException("Operación no implementada todavía");
+
+        // 1. Validar la encuesta (reutilizamos [FUNC-3])
+        // Esto lanza InstanceNotFoundException si no existe
+        Encuesta encuesta = encuestaDao.find(encuestaId);
+
+        // 2. Validar estado: no se puede cancelar si ya ha finalizado
+        // (requisito de [FUNC-5])
+        if (encuesta.getFechaFin().isBefore(LocalDateTime.now())) {
+            throw new EncuestaFinalizadaException(encuestaId, encuesta.getFechaFin());
+        }
+
+        // 3. Validar estado: no se puede cancelar si ya está cancelada
+        // (requisito de [FUNC-5])
+        if (encuesta.isCancelada()) {
+            throw new EncuestaCanceladaException(encuestaId);
+        }
+
+        // 4. Realizar la cancelación
+        encuesta.setCancelada(true);
+
+        // 5. Guardar el cambio en la BD (reutilizamos el 'update' de [FUNC-4])
+        encuestaDao.update(encuesta);
+
+        // 6. Devolver la encuesta actualizada
+        return encuesta;
     }
+
 
     @Override
     public List<Respuesta> obtenerRespuestas(Long encuestaId, boolean soloAfirmativas)
             throws InstanceNotFoundException, EncuestaCanceladaException {
-        throw new UnsupportedOperationException("Operación no implementada todavía");
+
+        Encuesta encuesta = encuestaDao.find(encuestaId);
+
+
+        if (encuesta.isCancelada()) {
+            throw new EncuestaCanceladaException(encuestaId);
+        }
+
+        return respuestaDao.findByEncuestaId(encuestaId, soloAfirmativas);
     }
 }

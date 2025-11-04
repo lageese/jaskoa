@@ -15,6 +15,7 @@ public interface SurveyService {
     public Encuesta crearEncuesta(Encuesta encuesta)
             throws InputValidationException, FechaFinExpiradaException;
 
+
     public List<Encuesta> buscarEncuestas(String palabraClave, boolean soloNoFinalizadas);
 
     public Encuesta buscarEncuestaPorId(Long encuestaId)

@@ -13,10 +13,9 @@ import java.util.List;
 import es.udc.ws.app.model.util.exceptions.InstanceNotFoundException;
 import es.udc.ws.util.sql.DataSourceLocator;
 
-// NOMBRE DE LA CLASE CORREGIDO: SqlEncuestaDao en lugar de JdbcEncuestaDao
+
 public class SqlEncuestaDao implements EncuestaDao {
 
-    // Este campo no se usaba en tu versión, lo quitamos para más claridad
     // private DataSource dataSource;
 
     @Override
@@ -26,7 +25,7 @@ public class SqlEncuestaDao implements EncuestaDao {
                 "respuestasPositivas, respuestasNegativas, cancelada) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
-        // El 'try-with-resources' ya cierra la conexión automáticamente
+
         try (Connection connection = DataSourceLocator.getDataSource("jdbc/app").getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(
                      query, Statement.RETURN_GENERATED_KEYS)) {
@@ -94,17 +93,17 @@ public class SqlEncuestaDao implements EncuestaDao {
     }
 
     public List<Encuesta> findByKeyword(String keyword, boolean soloNoFinalizadas) {
-        
+
         // Versión simplificada de la query base
         String baseQuery = "SELECT encuestaId, pregunta, fechaFin, fechaCreacion, " +
                 "respuestasPositivas, respuestasNegativas, cancelada " +
                 "FROM Encuesta WHERE pregunta LIKE ?";
-        
+
         // Añadir condiciones dinámicas
         if (soloNoFinalizadas) {
             baseQuery += " AND fechaFin > ?";
         }
-        
+
         baseQuery += " ORDER BY fechaCreacion DESC";
 
         List<Encuesta> encuestas = new ArrayList<>();
@@ -133,7 +132,7 @@ public class SqlEncuestaDao implements EncuestaDao {
                 encuestas.add(new Encuesta(encuestaId, pregunta, fechaFin, fechaCreacion,
                         respuestasPositivas, respuestasNegativas, cancelada));
             }
-            
+
             return encuestas;
 
         } catch (SQLException e) {
@@ -142,26 +141,72 @@ public class SqlEncuestaDao implements EncuestaDao {
     }
 
     @Override
-    public List<Encuesta> findByKeywords(String keyword, boolean soloNoFinalizadas) {
-        // Delegar a la implementación existente para evitar duplicación
-        return findByKeyword(keyword, soloNoFinalizadas);
-    }
+    public List<Encuesta> findByKeywords(String keywords, boolean soloNoFinalizadas) {
 
+        List<Encuesta> encuestas = new ArrayList<>();
+
+
+        String queryString = "SELECT encuestaId, pregunta, fechaCreacion, fechaFin, "
+                + "respuestasPositivas, respuestasNegativas, cancelada "
+                + "FROM Encuesta WHERE pregunta LIKE ?";
+
+
+        if (soloNoFinalizadas) {
+            queryString += " AND fechaFin > ?";
+        }
+
+        queryString += " ORDER BY fechaCreacion DESC";
+
+        try (Connection connection = DataSourceLocator.getDataSource("jdbc/ws-javaexamples-ds").getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(queryString)) {
+
+            // Asignamos los parámetros
+            preparedStatement.setString(1, "%" + keywords + "%");
+
+            if (soloNoFinalizadas) {
+                preparedStatement.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            }
+
+            ResultSet rs = preparedStatement.executeQuery();
+
+            // Recorremos los resultados
+            while (rs.next()) {
+                Long encuestaId = rs.getLong(1);
+                String pregunta = rs.getString(2);
+                LocalDateTime fechaCreacion = rs.getTimestamp(3).toLocalDateTime();
+                LocalDateTime fechaFin = rs.getTimestamp(4).toLocalDateTime();
+                long pos = rs.getLong(5); // Usamos getLong
+                long neg = rs.getLong(6); // Usamos getLong
+                boolean cancelada = rs.getBoolean(7);
+
+                // Añadimos la encuesta a la lista
+                encuestas.add(new Encuesta(encuestaId, pregunta, fechaCreacion, fechaFin,
+                        pos, neg, cancelada));
+            }
+
+            // Devolvemos la lista (estará vacía si no se encontró nada)
+            return encuestas;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
     @Override
     public void update(Encuesta encuesta) throws InstanceNotFoundException {
 
-        String query = "UPDATE Encuesta SET pregunta = ?, fechaFin = ?, " +
+        String queryString = "UPDATE Encuesta SET pregunta = ?, fechaFin = ?, " +
                 "respuestasPositivas = ?, respuestasNegativas = ?, cancelada = ? " +
                 "WHERE encuestaId = ?";
 
-        try (Connection connection = DataSourceLocator.getDataSource("jdbc/app").getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+        // Usamos el JNDI name de tu pom.xml
+        try (Connection connection = DataSourceLocator.getDataSource("jdbc/ws-javaexamples-ds").getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(queryString)) {
 
             // Asignar parámetros
             preparedStatement.setString(1, encuesta.getPregunta());
             preparedStatement.setTimestamp(2, Timestamp.valueOf(encuesta.getFechaFin()));
-            preparedStatement.setInt(3, (int) encuesta.getRespuestasPositivas());
-            preparedStatement.setInt(4, (int) encuesta.getRespuestasNegativas());
+            preparedStatement.setLong(3, encuesta.getRespuestasPositivas());
+            preparedStatement.setLong(4, encuesta.getRespuestasNegativas());
             preparedStatement.setBoolean(5, encuesta.isCancelada());
             preparedStatement.setLong(6, encuesta.getEncuestaId());
 
@@ -169,6 +214,7 @@ public class SqlEncuestaDao implements EncuestaDao {
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected == 0) {
+                // Si no se actualizó ninguna fila, la encuesta no existía
                 throw new InstanceNotFoundException(encuesta.getEncuestaId(), Encuesta.class.getName());
             }
 

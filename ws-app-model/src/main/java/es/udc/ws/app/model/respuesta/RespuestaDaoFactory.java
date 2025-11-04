@@ -1,10 +1,7 @@
 package es.udc.ws.app.model.respuesta;
 
-// Se importa la interfaz del DAO que esta factoría va a instanciar
-import es.udc.ws.app.model.respuesta.RespuestaDao;
-
+// Esta clase es idéntica a EncuestaDaoFactory, pero para Respuesta
 public class RespuestaDaoFactory {
-    // El nombre del parámetro de configuración cambia para ser específico de esta factoría
     private final static String CLASS_NAME_PARAMETER = "RespuestaDaoFactory.className";
     private static RespuestaDao dao = null;
 
@@ -16,8 +13,7 @@ public class RespuestaDaoFactory {
         try {
             String daoClassName = System.getProperty(CLASS_NAME_PARAMETER);
             if (daoClassName == null) {
-                // Nombre por defecto de la implementación SQL del DAO de Respuesta
-                // Sigue el mismo patrón que EncuestaDaoFactory
+                // Apuntamos a la implementación SQL que crearemos en el siguiente paso
                 daoClassName = "es.udc.ws.app.model.respuesta.SqlRespuestaDao";
             }
             Class<?> daoClass = Class.forName(daoClassName);
